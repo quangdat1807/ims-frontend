@@ -1,4 +1,3 @@
-import "../../../asset/css/interviewShedule.css";
 import * as React from "react";
 import { useSelector } from "react-redux";
 import { useDispatch } from "react-redux";
@@ -96,7 +95,6 @@ const CalendarInterview = () => {
           title: "Tạo lịch phỏng vấn thành công",
           showConfirmButton: false,
           timer: 1500,
-          style: "display:block",
         });
         dispatch(popUpActions.hide());
         setEnterEmail("");

@@ -42,9 +42,7 @@ function ReusableDialog({
             <Button variant="outlined" onClick={handleClose}>
               Hủy
             </Button>
-            <Button variant="contained" type="submit" autoFocus>
               {button}
-            </Button>
           </DialogActions>
         </Box>
       </Dialog>

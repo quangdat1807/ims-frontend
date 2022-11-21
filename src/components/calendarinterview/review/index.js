@@ -24,11 +24,11 @@ const Preview = () => {
   };
   const invitation =
     "Như đã qua trao đổi bằng điện thoại, chúng tôi xin mời bạn đến với cuộc phỏng vấn chi tiết với trưởng dự án bằng link dưới đây.";
-  const contact = 
-  "Vui lòng xác nhận nếu bạn nhận được email này. Nếu bạn có bất kì câu hỏi nào, chỉ cần liên hệ với chúng tôi qua.";
+  const contact =
+    "Vui lòng xác nhận nếu bạn nhận được email này. Nếu bạn có bất kì câu hỏi nào, chỉ cần liên hệ với chúng tôi qua.";
   const hotline = "0977.465.083";
-  const email = "intern-binhdinh@tma.com.vn"
-  const website = "www.tma-binhdinh.vn"
+  const email = "intern-binhdinh@tma.com.vn";
+  const website = "www.tma-binhdinh.vn";
   return (
     <Dialog
       open={showPopUp}
@@ -50,31 +50,31 @@ const Preview = () => {
           <List
             sx={{ width: "100%", maxWidth: 500, bgcolor: "background.paper" }}
           >
-            <Typography sx={{color: "red"}}>Xin chào {showData?.name}</Typography>
+            <Typography sx={{ color: "red" }}>
+              Xin chào {showData?.name}
+            </Typography>
             <Typography>{invitation}</Typography>
-            <ListItem sx={{pb: 0}}>
+            <ListItem sx={{ pb: 0 }}>
               <Typography>
                 - Ngày phỏng vấn: {dayjs(showData?.date).format("DD/MM/YYYY")}
               </Typography>
             </ListItem>
-            <ListItem sx={{py: 0}}>
-              <Typography>
-                - Thời gian phỏng vấn: {showData?.time}
-              </Typography>
+            <ListItem sx={{ py: 0 }}>
+              <Typography>- Thời gian phỏng vấn: {showData?.time}</Typography>
             </ListItem>
-            <ListItem sx={{py: 0}}>
-              <Typography>
-                - Link phỏng vấn: {showData?.link}
-              </Typography>
+            <ListItem sx={{ py: 0 }}>
+              <Typography>- Link phỏng vấn: {showData?.link}</Typography>
             </ListItem>
-            <ListItem sx={{pt: 0}}>
+            <ListItem sx={{ pt: 0 }}>
               <Typography>
                 - Email người phỏng vấn: {showData?.emailMentor}
               </Typography>
             </ListItem>
             <Typography>{contact}</Typography>
             <Typography>Hotline: {hotline}</Typography>
-            <Typography>Email: {email} | Website: {website}</Typography>
+            <Typography>
+              Email: {email} | Website: {website}
+            </Typography>
           </List>
         </DialogContent>
         <DialogActions>

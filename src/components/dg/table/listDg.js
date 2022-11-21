@@ -52,7 +52,7 @@ function ListDg() {
 
   useEffect(() => {
     fetchDG();
-  }, [dg]);
+  }, []);
 
   const onSubmitAdd = (data) => {
     apiaxios
@@ -68,7 +68,7 @@ function ListDg() {
             style: "display:block",
           });
         }
-        fetchDG()
+        fetchDG();
       })
       .catch((error) => {
         if (error.response) {
@@ -122,7 +122,7 @@ function ListDg() {
             style: "display:block",
           });
         }
-        fetchDG()
+        fetchDG();
       })
       .catch((error) => {
         if (error.response) {
@@ -154,11 +154,6 @@ function ListDg() {
     handleClose();
   };
 
-  const handleDelete = (idDG) => {
-    console.log(idDG)
-    dispatch(deleteDg(idDG));
-  }
-
   const handleOpen = () => {
     setOpen(true);
   };
@@ -171,8 +166,16 @@ function ListDg() {
   };
 
   const title = "Thêm nhóm thực tập";
-  const button = "Thêm";
-  const buttonEdit = "Sửa";
+  const button = (
+    <Button variant="contained" type="submit" autoFocus>
+      Thêm
+    </Button>
+  );
+  const buttonEdit = (
+    <Button variant="contained" type="submit" autoFocus>
+      Cập nhật
+    </Button>
+  );
   const children = (
     <TextField
       label="Tên nhóm thực tập"
@@ -250,21 +253,6 @@ function ListDg() {
                         onClick={() => {
                           handleEditClick(row);
                           handlOpenEdit();
-                        }}
-                      />
-                      <DeleteForeverIcon
-                        sx={{
-                          fontSize: 22,
-                          color: "red",
-                          borderRadius: "20%",
-                          cursor: "pointer",
-                          "&:hover": {
-                            color: "white",
-                            backgroundColor: "red",
-                          },
-                        }}
-                        onClick={() => {
-                          handleDelete(row.idDG)
                         }}
                       />
                     </TableCell>

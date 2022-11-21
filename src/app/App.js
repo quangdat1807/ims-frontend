@@ -10,6 +10,7 @@ import Internships from "../components/table/internships/InternShips";
 import MenuBar from "../components/home/navbar/menuBar";
 import ListDg from "../components/dg/table/listDg";
 import SelectBatch from "../components/main/batch/selectBatch";
+import Footer from "../components/home/footer/footer";
 
 function App() {
   const isAuthen = useSelector((state) => state.auth.isAuthenticated);
@@ -27,7 +28,7 @@ function App() {
         </Route>
         {isAuthen && (
           <>
-            <MenuBar />
+            <MenuBar/>
             <Switch>
               <Route>
                 <Route path="/candidate" exact component={Candidate} />
@@ -40,6 +41,7 @@ function App() {
                 <Route path="/batch" exact component={SelectBatch} />
               </Route>
             </Switch>
+            {/* <Footer/> */}
           </>
         )}
         <Route path="*">

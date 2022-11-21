@@ -9,21 +9,12 @@ import {
   IconButton,
   InputLabel,
   MenuItem,
-  Paper,
   Select,
-  Table,
-  TableBody,
   TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
   TableRow,
   TextField,
-  Toolbar,
-  Typography,
 } from "@mui/material";
 import { Box } from "@mui/system";
-import * as constTable from "../../../../constant/internview/table/index";
 import * as apiaxios from "../../../../api/service";
 import {
   delinterviewAPI,
@@ -38,83 +29,41 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import EditIcon from "@mui/icons-material/Edit";
 import SearchIcon from "@mui/icons-material/Search";
 import dayjs from "dayjs";
-import * as ReusableTable from "../../../componentsReuse/reusableTable";
-import { visuallyHidden } from "@mui/utils";
-import PropTypes from "prop-types";
 import Swal from "sweetalert2";
 import ReusableDialog from "../../../componentsReuse/reusableDialog";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { useForm } from "react-hook-form";
 import InsertInterview from "../insert/insertInterview";
+import ReusableTable from "../../../componentsReuse/reusableTable";
 
 const headCells = [
   {
-    id: "fullName",
-    disablePadding: true,
     label: "Họ tên",
   },
   {
-    id: "emailCandidate",
-    disablePadding: false,
     label: "Email",
   },
   {
-    id: "interviewDate",
-    disablePadding: false,
     label: "Ngày phỏng vấn",
   },
   {
-    id: "interviewTime",
-    disablePadding: false,
     label: "Giờ phỏng vấn",
   },
   {
-    id: "interviewer",
-    disablePadding: false,
     label: "Người phỏng vấn",
   },
   {
-    id: "interviewLink",
-    disablePadding: false,
     label: "Link phỏng vấn",
   },
   {
-    id: "result",
-    disablePadding: false,
     label: "Kết quả",
   },
   {
-    id: "action",
-    disablePadding: false,
     label: "Tác vụ",
   },
 ];
-//render paging
-function EnhancedTableHead() {
-  return (
-    <TableHead>
-      <TableRow>
-        {headCells.map((headCell) => (
-          <TableCell
-            key={headCell.id}
-            align="left"
-            padding={headCell.disablePadding ? "none" : "normal"}
-            sx={{ px: 0 }}
-          >
-            <Typography sx={{ paddingLeft: 2, fontWeight: 600 }}>
-              {headCell.label}
-            </Typography>
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-  );
-}
 
-EnhancedTableHead.propTypes = {
-  rowCount: PropTypes.number.isRequired,
-};
 function Interview() {
   const idBatch = localStorage.getItem("idBatch");
   const { register, handleSubmit, reset } = useForm();
@@ -128,8 +77,7 @@ function Interview() {
   //state data
   const [DG, setDG] = useState([]);
   const [mentor, setMentor] = useState([]);
-  const [idDG, setIdDG] = useState([]);
-  const [status, setStatus] = useState([]);
+  const [resultInterview, setResultInterview] = useState([]);
   const [valuesId, setValuesId] = useState(null);
   const [values, setValues] = useState({
     idCandidate: "",
@@ -149,6 +97,7 @@ function Interview() {
     englishCommunication: "",
     remarks: "",
   });
+  const [student, setStudent] = useState([]);
   useEffect(() => {
     batchAPI(`internshipcourse/${idBatch}`, "Get", null).then((res) => {
       setBatchTitle(res.data.data);
@@ -156,21 +105,28 @@ function Interview() {
     mentorDG(`dg?idInternshipCourse=${idBatch}`, null).then((res) => {
       setDG(res.data.data);
     });
-    fetchDataPassed()
-  }, []);
+    fetchDataPassed();
+    fetchStudent();
+  }, [posts]);
+
+  const fetchStudent = () => {
+    apiaxios.student(`internship/batch/${idBatch}`).then((res) => {
+      setStudent(res.data.data);
+    });
+  };
 
   useEffect(() => {
-    const fetchDatas = async () => {
-      mentorAPI(
-        `mentor/idDG?idDG=${idDG}&idInternshipCourse=${idBatch}`,
-        null
-      ).then((res) => {
-        setMentor(res.data.data);
-      });
+    const fetchDataMentor = async () => {
+      mentorAPI(`mentor/idDG?idDG&idInternshipCourse=${idBatch}`, null).then(
+        (res) => {
+          setMentor(res.data.data);
+        }
+      );
     };
-    fetchDatas();
-  }, [idDG]);
-  // console.log(posts)
+    fetchDataMentor();
+  }, []);
+
+  // load data interview
   const fetchData = async () => {
     apiaxios
       .interviewAPI(`internview/${idBatch}?fullName=${search}`, null)
@@ -181,6 +137,8 @@ function Interview() {
         throw error;
       });
   };
+
+  // load data "Pass" display result
   const fetchDataPassed = () => {
     const status = "Pass";
     const updateInsert = "success";
@@ -190,15 +148,12 @@ function Interview() {
         null
       )
       .then((res) => {
-        // console.log(res)
-        setStatus(res.data.data);
+        setResultInterview(res.data.data);
       });
   };
   useEffect(() => {
     if (search.length === 0 || search.length > 0) fetchData();
   }, [search]);
-
-  // console.log(status);
 
   const handleEditClick = (interview) => {
     reset();
@@ -234,6 +189,7 @@ function Interview() {
     };
     setValues(formValues);
   };
+  // edit interview
   const onSubmit = (data) => {
     data.idCandidate = values.idCandidate;
     data.emailCandidate = values.emailCandidate;
@@ -246,8 +202,9 @@ function Interview() {
       .then((res) => {
         Swal.fire({
           icon: "success",
-          text: "Cập nhật thành công !!!",
-          confirmButtonText: "Xác nhận",
+          title: "Cập nhật thành công",
+          showConfirmButton: false,
+          timer: 1500,
         });
         handleClose();
         const newBatch = [...posts];
@@ -266,6 +223,7 @@ function Interview() {
         });
       });
   };
+  // Delete row
   const handleDeleteClick = (id) => {
     Swal.fire({
       title: "Bạn có muốn xóa người này ?",
@@ -287,6 +245,12 @@ function Interview() {
         );
         newContacts.splice(index, 1);
         setPosts(newContacts);
+        Swal.fire({
+          icon: "success",
+          title: "Xóa thành công",
+          showConfirmButton: false,
+          timer: 1500,
+        });
       }
     });
   };
@@ -306,6 +270,7 @@ function Interview() {
   };
 
   const titleView = `Thông tin phỏng vấn`;
+  const titleTable = `Danh sách phỏng vấn ${batchTitle.nameCoure}`;
   const dataView = (
     <>
       <div>
@@ -417,146 +382,115 @@ function Interview() {
     </>
   );
 
-  return (
-    <>
-      <Toolbar
-        sx={{
-          pl: { sm: 2 },
-          pr: { xs: 1, sm: 1 },
-          margin: "auto",
-        }}
-      >
-        <Typography
-          sx={{ flex: "1 1 100%", maxWidth: 350, margin: "auto" }}
-          variant="h5"
-          id="tableTitle"
-          component="div"
+  const dataSearch = (
+    <TextField
+      size="small"
+      placeholder="Tìm kiếm..."
+      onChange={(e) => setSearch(e.target.value.toLowerCase())}
+      InputProps={{
+        endAdornment: (
+          <IconButton>
+            <SearchIcon />
+          </IconButton>
+        ),
+      }}
+    />
+  );
+
+  // load data display
+  const children = posts?.map((row, index) => {
+    return (
+      <TableRow hover tabIndex={-1} key={index} sx={{}}>
+        <TableCell sx={{ minWidth: "100px" }}>{row.fullName}</TableCell>
+        <TableCell
+          sx={{
+            maxWidth: 150,
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+          }}
         >
-          Danh sách phỏng vấn {batchTitle.nameCoure}
-        </Typography>
-      </Toolbar>
-      <Box>
-        <Box sx={{ width: "100%", mb: 2, maxWidth: 1200, margin: "auto" }}>
-          <TextField
-            size="small"
-            placeholder="Tìm kiếm..."
-            onChange={(e) => setSearch(e.target.value.toLowerCase())}
-            InputProps={{
-              endAdornment: (
-                <IconButton>
-                  <SearchIcon />
-                </IconButton>
-              ),
+          {row.emailCandidate}
+        </TableCell>
+        <TableCell>{dayjs(row.interviewDate).format("DD/MM/YYYY")}</TableCell>
+        <TableCell>{row.interviewTime}</TableCell>
+        <TableCell>{row.interviewer}</TableCell>
+        <TableCell
+          sx={{
+            maxWidth: 150,
+            whiteSpace: "nowrap",
+            textOverflow: "ellipsis",
+            overflow: "hidden",
+          }}
+        >
+          {row.interviewLink}
+        </TableCell>
+
+        <TableCell>{row.status}</TableCell>
+        <TableCell sx={{ minWidth: "50px" }}>
+          <EditIcon
+            sx={{
+              fontSize: 22,
+              color: "#1976d2",
+              borderRadius: "20%",
+              cursor: "pointer",
+              "&:hover": {
+                color: "white",
+                backgroundColor: "#1976d2",
+              },
+            }}
+            variant="outlined"
+            onClick={() => {
+              handleEditClick(row);
+              handleOpen();
             }}
           />
-          <Button
-            variant="contained"
-            type="submit"
-            sx={{ float: "right" }}
-            onClick={() => handleOpenInsert()}
-          >
-            Kết quả
-          </Button>
-         
-        </Box>
-      </Box>
-      {/* Table load data */}
-      <Box sx={{ width: "100%" }}>
-        <Paper sx={{ width: "100%", mb: 2, maxWidth: 1200, margin: "auto" }}>
-          <TableContainer>
-            <Table sx={{ minWidth: 750 }} aria-labelledby="tableTitle">
-              <EnhancedTableHead rowCount={posts.length} />
-              <TableBody>
-                {posts?.map((row, index) => {
-                  return (
-                    <TableRow hover tabIndex={-1} key={index} sx={{}}>
-                      <TableCell sx={{ minWidth: "100px" }}>
-                        {row.fullName}
-                      </TableCell>
-                      <TableCell
-                        sx={{
-                          maxWidth: 150,
-                          whiteSpace: "nowrap",
-                          textOverflow: "ellipsis",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {row.emailCandidate}
-                      </TableCell>
-                      <TableCell>
-                        {dayjs(row.interviewDate).format("DD/MM/YYYY")}
-                      </TableCell>
-                      <TableCell>{row.interviewTime}</TableCell>
-                      <TableCell>{row.interviewer}</TableCell>
-                      <TableCell
-                        sx={{
-                          maxWidth: 150,
-                          whiteSpace: "nowrap",
-                          textOverflow: "ellipsis",
-                          overflow: "hidden",
-                        }}
-                      >
-                        {row.interviewLink}
-                      </TableCell>
+          <VisibilityIcon
+            sx={{
+              fontSize: 22,
+              color: "#1976d2",
+              borderRadius: "20%",
+              cursor: "pointer",
+              mx: "3px",
+              "&:hover": {
+                color: "white",
+                backgroundColor: "#1976d2",
+              },
+            }}
+            onClick={() => {
+              handleEditClick(row);
+              handleOpenView();
+            }}
+          />
+          <DeleteForeverIcon
+            sx={{
+              fontSize: 22,
+              color: "red",
+              borderRadius: "20%",
+              cursor: "pointer",
+              "&:hover": {
+                color: "white",
+                backgroundColor: "red",
+              },
+            }}
+            onClick={() => handleDeleteClick(row.idCandidate)}
+          />
+        </TableCell>
+      </TableRow>
+    );
+  });
 
-                      <TableCell>{row.status}</TableCell>
-                      <TableCell sx={{ minWidth: "50px" }}>
-                        <EditIcon
-                          sx={{
-                            fontSize: 22,
-                            color: "#1976d2",
-                            borderRadius: "20%",
-                            cursor: "pointer",
-                            "&:hover": {
-                              color: "white",
-                              backgroundColor: "#1976d2",
-                            },
-                          }}
-                          variant="outlined"
-                          onClick={() => {
-                            handleEditClick(row);
-                            handleOpen();
-                          }}
-                        />
-                        <VisibilityIcon
-                          sx={{
-                            fontSize: 22,
-                            color: "#1976d2",
-                            borderRadius: "20%",
-                            cursor: "pointer",
-                            mx: "3px",
-                            "&:hover": {
-                              color: "white",
-                              backgroundColor: "#1976d2",
-                            },
-                          }}
-                          onClick={() => {
-                            handleEditClick(row);
-                            handleOpenView();
-                          }}
-                        />
-                        <DeleteForeverIcon
-                          sx={{
-                            fontSize: 22,
-                            color: "red",
-                            borderRadius: "20%",
-                            cursor: "pointer",
-                            "&:hover": {
-                              color: "white",
-                              backgroundColor: "red",
-                            },
-                          }}
-                          onClick={() => handleDeleteClick(row.idCandidate)}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Box>
+  return (
+    <>
+      {/* Load data table */}
+      <ReusableTable
+        title={titleTable}
+        search={dataSearch}
+        handleSubmit={handleOpenInsert}
+        headCells={headCells}
+        children={children}
+      />
+
       {/* Edit internview */}
       <Dialog
         open={isOpen}
@@ -716,7 +650,10 @@ function Interview() {
       <InsertInterview
         openInsert={openInsert}
         setOpenInsert={setOpenInsert}
-        status={status}
+        resultInterview={resultInterview}
+        setResultInterview={setResultInterview}
+        posts={posts}
+        student={student}
       />
     </>
   );

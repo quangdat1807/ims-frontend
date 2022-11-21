@@ -1,4 +1,6 @@
+import React, { useEffect, useState } from "react";
 import {
+  Button,
   FormControl,
   InputLabel,
   MenuItem,
@@ -8,7 +10,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
 import ReusableTable from "../../componentsReuse/reusableTable";
 import * as apiaxios from "../../../api/service";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
@@ -20,60 +21,57 @@ import { useForm } from "react-hook-form";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DesktopDatePicker } from "@mui/x-date-pickers/DesktopDatePicker";
+import AddStudent from "./addStudent.js";
 import dayjs from "dayjs";
+import ViewStudent from "./viewStudent";
 
 const headCells = [
   {
-    disablePadding: true,
     label: "Họ tên",
   },
   {
-    disablePadding: false,
     label: "Email",
   },
   {
-    disablePadding: false,
     label: "Trường",
   },
   {
-    disablePadding: false,
     label: "Trạng thái",
   },
   {
-    disablePadding: false,
     label: "Số điện thoại",
   },
   {
-    disablePadding: false,
     label: "Tên DG",
   },
   {
-    disablePadding: false,
     label: "Tên Mentor",
   },
   {
-    disablePadding: false,
     label: "Tác vụ",
   },
 ];
 
 function Students() {
-  const [posts, setPosts] = useState([]);
+  const today = new Date();
   const { register, handleSubmit, reset } = useForm();
+  // data table
+  const [posts, setPosts] = useState([]);
+  const [mentor, setMentor] = useState([]);
+  const [dg, setDg] = useState([]);
+  // open dialog
   const [openEdit, setOpenEdit] = useState(false);
+  const [openView, setOpenView] = useState(false);
+
   const [titleBatch, settitleBatch] = useState([]);
+  // date format
   const [testDate, setTestDate] = useState("");
   const [certificationDate, setCertificationDate] = useState("");
-  const [dayOfBirth, setDayOfBirth] = useState("")
-  const [mentor, setMentor] = useState([]);
-  const [idDG, setIdDG] = useState([]);
-  const [dg, setDg] = useState([]);
   const idBatch = localStorage.getItem("idBatch");
   const [values, setValues] = useState({
     idInternship: "",
     fullNameInternship: "",
     address: "",
-    dayOfBirth: "",
     university: "",
     email: "",
     idMentor: "",
@@ -103,14 +101,12 @@ function Students() {
   });
 
   const fetchMentor = () => {
-    apiaxios
-      .mentorAPI(`mentor/batch/${idBatch}?idDG=${idDG}`, null)
-      .then((res) => {
-        setMentor(res.data.data);
-      });
+    apiaxios.mentorAPI(`mentor/batch/${idBatch}?idDG`, null).then((res) => {
+      setMentor(res.data.data);
+    });
   };
 
-  const fecthData = () => {
+  const fetchData = () => {
     apiaxios.student(`internship/batch/${idBatch}`).then((res) => {
       setPosts(res.data.data);
     });
@@ -118,18 +114,22 @@ function Students() {
 
   useEffect(() => {
     apiaxios
+      .batchAPI(`internshipcourse/${idBatch}`, "Get", null)
+      .then((res) => {
+        settitleBatch(res.data.data);
+      });
+    apiaxios
       .mentorDG(`dg?idInternshipCourse=${idBatch}`, "Get", null)
       .then((res) => {
         setDg(res.data.data);
       });
-    fecthData();
+    fetchData();
     fetchMentor();
-  }, [idBatch, posts]);
+  }, []);
 
   useEffect(() => {
     setTestDate(values.testDate);
     setCertificationDate(values.certificationDate);
-    setDayOfBirth(values.dayOfBirth)
   }, [values]);
 
   const [valuesId, setValuesId] = useState(null);
@@ -140,7 +140,6 @@ function Students() {
       idInternship: students.idInternship,
       fullNameInternship: students.fullNameInternship,
       address: students.address === null ? "" : students.address,
-      dayOfBirth: students.dayOfBirth === undefined ? "" : students.dayOfBirth,
       university: students.university === null ? "" : students.university,
       email: students.email === null ? "" : students.email,
       idMentor: students.idMentor,
@@ -193,15 +192,11 @@ function Students() {
 
   const onSubmitEdit = (data) => {
     data.idInternship = values.idInternship;
-    data.dayOfBirth = values.dayOfBirth;
     data.testDate = dayjs(testDate).format("YYYY/MM/DD");
     data.certificationDate = dayjs(certificationDate).format("YYYY/MM/DD");
-    data.dayOfBirth = dayjs(dayOfBirth).format("YYYY/MM/DD");
-    data.address = values.address;
     data.nameDG = values.nameDG;
     data.nameCoure = values.nameCoure;
     data.fullNameMentor = values.fullNameMentor;
-    console.log(data);
     apiaxios
       .editStudent(`internship/${valuesId}`, data)
       .then((res) => {
@@ -211,63 +206,15 @@ function Students() {
         );
         newBatch[index] = data;
         setPosts(newBatch);
-        settitleBatch(newBatch);
-        reset();
+        fetchData();
         if (res.data) {
           Swal.fire({
             icon: "success",
             title: "Sửa thành công",
             showConfirmButton: false,
             timer: 1500,
-            style: "display:block",
           });
         }
-      })
-      .catch((error) => {
-        if (error.response) {
-          Swal.fire({
-            icon: "error",
-            text: error.response.data.error,
-            confirmButtonText: "Xác nhận",
-          });
-        } else if (error.request) {
-          Swal.fire({
-            icon: "error",
-            text: error.request,
-            confirmButtonText: "Xác nhận",
-          });
-        } else {
-          console.log("Error", error.message);
-          Swal.fire({
-            icon: "error",
-            text: error.message,
-            confirmButtonText: "Xác nhận",
-          });
-        }
-      });
-    handleClose();
-  };
-
-  const onSubmitAdd = (dataAdd) => {
-    console.log(dataAdd);
-    dataAdd.testDate = dayjs(testDate).format("YYYY/MM/DD");
-    dataAdd.certificationDate = dayjs(certificationDate).format("YYYY/MM/DD");
-    dataAdd.dayOfBirth = dayjs(dayOfBirth).format("YYYY/MM/DD");
-    apiaxios
-      .studentCreate(`internship?idInternshipCourse=${idBatch}`, dataAdd)
-      .then((res) => {
-        const newBatch = [...posts, dataAdd];
-        setPosts(newBatch);
-        if (res.data) {
-          Swal.fire({
-            icon: "success",
-            title: "Thêm thành công",
-            showConfirmButton: false,
-            timer: 1500,
-            style: "display:block",
-          });
-        }
-        reset();
       })
       .catch((error) => {
         if (error.response) {
@@ -315,6 +262,12 @@ function Students() {
           .then((res) => {});
         newContacts.splice(index, 1);
         setPosts(newContacts);
+        Swal.fire({
+          icon: "success",
+          title: "Xóa thành công",
+          showConfirmButton: false,
+          timer: 1500,
+        });
       }
     });
   };
@@ -326,24 +279,24 @@ function Students() {
     setOpenEdit(true);
   };
 
-  const handleClose = () => {
-    setOpenEdit(false);
-    setOpenAdd(false);
+  const handleOpenView = () => {
+    setOpenView(true);
   };
 
-  const titleTable = "Danh sách thực tập sinh";
+  const handleClose = () => {
+    setOpenEdit(false);
+  };
+
+  const titleTable = `Danh sách thực tập sinh ${titleBatch.nameCoure}`;
   const titleEdit = "Cập nhật thực tập sinh";
-  const titleAdd = "Thêm thực tập sinh";
-  const buttonAdd = "Thêm";
-  const buttonEdit = "Cập nhật";
+  const buttonEdit = (
+    <Button variant="contained" type="submit" autoFocus>
+      Cập nhật
+    </Button>
+  );
   const children = posts.map((row, index) => {
     return (
-      <TableRow
-        hover
-        //   onClick={(event) => handleClick(event, row.name)}
-        tabIndex={-1}
-        key={index}
-      >
+      <TableRow hover tabIndex={-1} key={index}>
         <TableCell>{row.fullNameInternship}</TableCell>
         <TableCell>{row.email}</TableCell>
         <TableCell>{row.university}</TableCell>
@@ -358,7 +311,6 @@ function Students() {
               color: "#1976d2",
               borderRadius: "20%",
               cursor: "pointer",
-              mr: 1,
               "&:hover": {
                 color: "white",
                 backgroundColor: "#1976d2",
@@ -368,6 +320,23 @@ function Students() {
             onClick={() => {
               handleEditClick(row);
               handleOpenEdit();
+            }}
+          />
+          <VisibilityIcon
+            sx={{
+              fontSize: 22,
+              color: "#1976d2",
+              borderRadius: "20%",
+              cursor: "pointer",
+              mx: 1,
+              "&:hover": {
+                color: "white",
+                backgroundColor: "#1976d2",
+              },
+            }}
+            onClick={() => {
+              handleEditClick(row);
+              handleOpenView("paper");
             }}
           />
           <DeleteForeverIcon
@@ -395,6 +364,8 @@ function Students() {
         </Typography>
         <div>
           <TextField
+            required
+            id="outlined-required"
             label="Họ tên"
             size="small"
             defaultValue={values.fullNameInternship}
@@ -402,6 +373,8 @@ function Students() {
             {...register("fullNameInternship")}
           />
           <TextField
+            required
+            id="outlined-required"
             label="Số điện thoại"
             size="small"
             defaultValue={values.telInternship}
@@ -409,6 +382,8 @@ function Students() {
             {...register("telInternship")}
           />
           <TextField
+            required
+            id="outlined-required"
             label="Email"
             size="small"
             defaultValue={values.email}
@@ -425,17 +400,6 @@ function Students() {
             defaultValue={values.address}
             name="address"
             {...register("address")}
-          />
-          <DesktopDatePicker
-            label="Ngày sinh"
-            //   maxDate={today}
-            inputFormat="DD/MM/YYYY"
-            value={dayOfBirth}
-            name="certificationDate"
-            onChange={(newValue) => {
-              setDayOfBirth(dayjs(newValue).format("MM/DD/YYYY"));
-            }}
-            renderInput={(params) => <TextField size="small" {...params} />}
           />
         </div>
         <Typography sx={{ ml: 1, mt: 1, fontWeight: 600 }}>
@@ -473,6 +437,8 @@ function Students() {
 
         <div>
           <TextField
+            required
+            id="outlined-required"
             label="Dự án thực tập"
             size="small"
             defaultValue={values.internshipProject}
@@ -511,13 +477,20 @@ function Students() {
 
           <DesktopDatePicker
             label="Ngày test Toeic"
-            //   maxDate={today}
+            maxDate={today}
             inputFormat="DD/MM/YYYY"
             value={testDate}
             onChange={(newValue) => {
               setTestDate(dayjs(newValue).format("MM/DD/YYYY"));
             }}
-            renderInput={(params) => <TextField size="small" {...params} />}
+            renderInput={(params) => (
+              <TextField
+                required
+                id="outlined-required"
+                size="small"
+                {...params}
+              />
+            )}
           />
 
           <TextField
@@ -569,7 +542,12 @@ function Students() {
             name="trainingAttendance"
             {...register("trainingAttendance")}
           />
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
+          <FormControl
+            sx={{ m: 1, minWidth: 200 }}
+            size="small"
+            required
+            id="outlined-required"
+          >
             <InputLabel htmlFor="grouped-select">Loại thực tập</InputLabel>
             <Select
               defaultValue={values.internshipSchedule}
@@ -583,7 +561,12 @@ function Students() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
+          <FormControl
+            sx={{ m: 1, minWidth: 200 }}
+            size="small"
+            required
+            id="outlined-required"
+          >
             <InputLabel htmlFor="grouped-select">Loại PC</InputLabel>
             <Select
               defaultValue={values.pcType}
@@ -598,7 +581,12 @@ function Students() {
           </FormControl>
         </div>
         <div>
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
+          <FormControl
+            sx={{ m: 1, minWidth: 200 }}
+            size="small"
+            required
+            id="outlined-required"
+          >
             <InputLabel htmlFor="grouped-select">Mentor</InputLabel>
             <Select
               defaultValue={values.idMentor}
@@ -617,7 +605,12 @@ function Students() {
             </Select>
           </FormControl>
 
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
+          <FormControl
+            sx={{ m: 1, minWidth: 200 }}
+            size="small"
+            required
+            id="outlined-required"
+          >
             <InputLabel htmlFor="grouped-select">Tên DG</InputLabel>
             <Select
               defaultValue={values.idDG}
@@ -635,7 +628,12 @@ function Students() {
               })}
             </Select>
           </FormControl>
-          <FormControl sx={{ m: 1, minWidth: 200 }} size="small">
+          <FormControl
+            sx={{ m: 1, minWidth: 200 }}
+            size="small"
+            required
+            id="outlined-required"
+          >
             <InputLabel htmlFor="grouped-select">
               Trạng thái thực tập
             </InputLabel>
@@ -673,17 +671,23 @@ function Students() {
 
           <DesktopDatePicker
             label="Ngày chứng nhận"
-            //   maxDate={today}
+            maxDate={today}
             inputFormat="DD/MM/YYYY"
             value={certificationDate}
             name="certificationDate"
             onChange={(newValue) => {
               setCertificationDate(dayjs(newValue).format("MM/DD/YYYY"));
             }}
-            renderInput={(params) => <TextField size="small" {...params} />}
+            renderInput={(params) => (
+              <TextField
+                required
+                id="outlined-required"
+                size="small"
+                {...params}
+              />
+            )}
           />
         </div>
-        
       </LocalizationProvider>
     </>
   );
@@ -698,6 +702,7 @@ function Students() {
         headCells={headCells}
         children={children}
       />
+
       {/* Edit student */}
       <ReusableDialog
         isOpen={openEdit}
@@ -707,14 +712,15 @@ function Students() {
         children={mainEdit}
         button={buttonEdit}
       />
+      {/* view data */}
+      <ViewStudent openView={openView} setOpenView={setOpenView} values={values} />
       {/* Add student */}
-      <ReusableDialog
-        isOpen={openAdd}
-        handleClose={handleClose}
-        title={titleAdd}
-        onSubmit={handleSubmit(onSubmitAdd)}
-        children={mainEdit}
-        button={buttonAdd}
+      <AddStudent
+        openAdd={openAdd}
+        setOpenAdd={setOpenAdd}
+        fetchData={fetchData}
+        dg={dg}
+        mentor={mentor}
       />
     </>
   );

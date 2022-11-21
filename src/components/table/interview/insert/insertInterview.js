@@ -13,15 +13,13 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Swal from "sweetalert2";
 import {
   insertinterviewAPI,
   updateinsertinterviewAPI,
   internshipStatusUpdate,
 } from "../../../../api/service";
-import ReusableDialog from "../../../componentsReuse/reusableDialog";
-import ReusableTable from "../../../componentsReuse/reusableTable";
 
 const headCells = [
   {
@@ -52,8 +50,9 @@ const headCells = [
 
 export default function InsertInterview(props) {
   const idBatch = localStorage.getItem("idBatch");
+
   const handleSubmit = (id) => {
-    handleClose()
+    handleClose();
     Swal.fire({
       title: "Bạn có muốn thêm danh sách này ?",
       text: "",
@@ -66,30 +65,29 @@ export default function InsertInterview(props) {
     }).then(
       (result) => {
         if (result.isConfirmed) {
-          const newContacts = [...props.status];
-          const index = props.status.findIndex(
+          const newContacts = [...props.resultInterview];
+          const index = props.resultInterview.findIndex(
             (products) => products.idInternshipCourse === id
           );
-          insertinterviewAPI(`internship/${id}`).then((res) => {
-            console.log(res)
-            // props.setPosts(res.data.data);
-          });
+          insertinterviewAPI(`internship/${id}`).then((res) => {});
           updateinsertinterviewAPI(`internview/updateInsert/${id}`).then(
-            (res) => {
-              console.log(res)
-            }
+            (res) => {}
           );
           internshipStatusUpdate(`internship/`).then((res) => {});
           for (let i = 0; i < newContacts.length; i) {
             newContacts.splice(index, 1);
           }
-          // props.setPosts(newContacts);
-        }
-        else {
-            props.setOpenInsert(true)
+          props.setResultInterview(newContacts);
+          Swal.fire({
+            icon: "success",
+            title: "Thêm thành công",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } else {
+          props.setOpenInsert(true);
         }
       },
-      [props.status]
     );
   };
 
@@ -136,7 +134,7 @@ export default function InsertInterview(props) {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {props.status?.map((row, index) => {
+                  {props.resultInterview?.map((row, index) => {
                     return (
                       <TableRow hover tabIndex={-1} key={index} sx={{}}>
                         <TableCell>{row.fullName}</TableCell>

@@ -18,6 +18,7 @@ import {
   FormControl,
   Toolbar,
   Typography,
+  Button,
 } from "@mui/material";
 import Paper from "@mui/material/Paper";
 import TextField from "@mui/material/TextField";
@@ -56,11 +57,15 @@ export default function InternShips() {
   const [nameCoure, setNameCoure] = useState("");
   const [data, setData] = useState([]);
   const [valueId, setValueId] = useState(null);
+  const [isDone, setIsDone] = useState(false);
 
-  useEffect(() => {
+  const fetchData = () => {
     apiaxios.batchAPI("internshipcourse").then((res) => {
       setPosts(res.data.data);
     });
+  }
+  useEffect(() => {
+    fetchData()
   }, []);
 
   const handleOpen = () => {
@@ -71,15 +76,19 @@ export default function InternShips() {
     setOpen(false);
   };
 
-  const onSubmit = (data) => {
+  const onSubmit = (value) => {
     let dateStartLast = dayjs(dateStart).format("YYYY/MM/DD");
     let dateEndLast = dayjs(dateEnd).format("YYYY/MM/DD");
-    data.idInternshipCourse = valueId;
-    data.dateStart = dateStartLast;
-    data.dateEnd = dateEndLast;
-    data.nameCoure = nameCoure;
+    value.idInternshipCourse = valueId;
+    value.dateStart = dateStartLast;
+    value.dateEnd = dateEndLast;
+    value.nameCoure = nameCoure;
+    // if isDone => set value status = data status
+    if (isDone) {
+      value.status = data.status
+    }
     apiaxios
-      .batchPut(`internshipcourse/${valueId}`, data)
+      .batchPut(`internshipcourse/${valueId}`, value)
       .then((res) => {
         const newBatch = [...posts];
         const index = posts.findIndex(
@@ -87,13 +96,13 @@ export default function InternShips() {
         );
         newBatch[index] = data;
         setPosts(newBatch);
+        fetchData()
         if (res.data) {
           Swal.fire({
             icon: "success",
             title: "Sửa thành công",
             showConfirmButton: false,
             timer: 1500,
-            style: "display:block",
           });
         }
       })
@@ -136,12 +145,21 @@ export default function InternShips() {
     setNameCoure(formValues.nameCoure);
   };
   useEffect(() => {
+    setIsDone(false);
     setDateStart(data.dateStart);
     setDateEnd(data.dateEnd);
+    // check status = done => set = true
+    if (data.status === "Done") {
+      setIsDone(true);
+    }
   }, [data]);
 
-  const titleEdit = "Sửa khóa thực tập";
-  const buttonEdit = "Sửa";
+  const titleEdit = `Sửa khóa thực tập ${data.nameCoure}`;
+  const buttonEdit = (
+    <Button variant="contained" type="submit" autoFocus>
+      Cập nhật
+    </Button>
+  );
   const children = (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
       <div>
@@ -159,7 +177,6 @@ export default function InternShips() {
           </Select>
         </FormControl>
         <DesktopDatePicker
-          // disableFuture
           label="Ngày bắt đầu"
           inputFormat="DD/MM/YYYY"
           value={dateStart}
@@ -167,8 +184,8 @@ export default function InternShips() {
           componentsProps={{
             actionBar: { actions: ["today"] },
           }}
-          minDate={dayjs("01/01/2022")}
-          maxDate={dayjs(dateEnd)}
+          minDate={"01/01/2022"}
+          maxDate={dateEnd}
           onChange={(newValue) => {
             setDateStart(dayjs(newValue).format("MM/DD/YYYY"));
           }}
@@ -178,17 +195,31 @@ export default function InternShips() {
       <div>
         <FormControl sx={{ m: 1, minWidth: 215 }}>
           <InputLabel htmlFor="grouped-select">Trạng thái</InputLabel>
-          <Select
-            defaultValue={data.status}
-            id="grouped-select"
-            label="Trạng thái"
-            name="status"
-            {...register("status")}
-          >
-            <MenuItem value="Done">Done</MenuItem>
-            <MenuItem value="In progress">In progress</MenuItem>
-            <MenuItem value="N/A">N/A</MenuItem>
-          </Select>
+           {/* !isDone display form select <=> select disable */}
+          {!isDone ? (
+            <Select
+              defaultValue={data.status}
+              id="grouped-select"
+              label="Trạng thái"
+              name="status"
+              {...register("status")}
+            >
+              <MenuItem value="Done">Done</MenuItem>
+              <MenuItem value="In progress">In progress</MenuItem>
+              <MenuItem value="N/A">N/A</MenuItem>
+            </Select>
+          ) : (
+            <Select
+              disabled
+              defaultValue={data.status}
+              id="grouped-select"
+              label="Trạng thái"
+              name="status"
+              {...register("status")}
+            >
+              <MenuItem value="Done">Done</MenuItem>
+            </Select>
+          )}
         </FormControl>
         <DesktopDatePicker
           label="Ngày kết thúc"
@@ -198,7 +229,7 @@ export default function InternShips() {
           componentsProps={{
             actionBar: { actions: ["today"] },
           }}
-          // minDate={dayjs("01-01-2020")}
+          minDate={dateStart}
           onChange={(newValue) => {
             setDateEnd(dayjs(newValue).format("MM/DD/YYYY"));
           }}
